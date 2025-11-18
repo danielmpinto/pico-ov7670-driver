@@ -164,6 +164,7 @@ int ov7670_capture(uint8_t *buf, size_t len, int width, int height) {
       for (int i = 0; i < 8; i++) {
         if (gpio_get(OV7670_DATA_PINS[i])) {
           // not used
+          // theoraccalyl takes UV byte
         }
       }
       while (gpio_get(OV7670_PCLK_PIN))
@@ -299,6 +300,8 @@ int ov7670_config() {
   ov7670_register_test();
   ov7670_register_writelist();
 
+  // defines rgb
+
   return 1;
 }
 
@@ -308,6 +311,10 @@ int ov7670_register_test() {
   uint8_t ver = ov7670_product_version();
   printf("Product ID Number : %x\n", pid);
   printf("Product Version Number : %x\n", ver);
+
+
+  
+
   if (pid == 0x76) {
     return 1;
   } else {
@@ -323,6 +330,24 @@ int ov7670_register_writelist() {
   for (int i = 0; i < array_size; i += 2) {
     uint8_t reg = _OV7670_inits[i];
     uint8_t val = _OV7670_inits[i + 1];
+    if (i == 0) {
+      printf("Reg: 0x%02X, Val: 0x%02X\n...\n...\n...\n", reg, val);
+    } else if (i == 192) {
+      printf("Reg: 0x%02X, Val: 0x%02X\n", reg, val);
+    }
+
+    ov7670_write_register(reg, val);
+    sleep_ms(1);
+  }
+
+
+  // defines format YUV or TGB
+  int array_rgb_size = sizeof(_OV7670_rgb) / sizeof(_OV7670_rgb[0]);
+  printf("Total registers to write: %d\n", array_rgb_size);
+  printf("Writing init registers...\n");
+  for (int i = 0; i < array_rgb_size; i += 2) {
+    uint8_t reg = _OV7670_rgb[i];
+    uint8_t val = _OV7670_rgb[i + 1];
     if (i == 0) {
       printf("Reg: 0x%02X, Val: 0x%02X\n...\n...\n...\n", reg, val);
     } else if (i == 192) {

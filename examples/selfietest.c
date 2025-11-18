@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "gfx.h"
@@ -8,16 +9,38 @@
 // observations:
 // use 4.7Kohm pullups on SDA and SCL lines
 
-static inline uint16_t Y_to_gray565(uint8_t Y) {
-  // turn Y (0-255) into a gray color in RGB565 format
-  return GFX_RGB565(Y, Y, Y);
+// static inline uint16_t Y_to_gray565(uint8_t Y, uint8_t U , uint8_t V) {    // doesnt need, not to gray anyway
+//   // turn Y (0-255) into a gray color in RGB565 format
+//   // return GFX_RGB565(Y, Y, Y);
+
+//      return GFX_RGB565(Y, U, V);
+// }
+
+uint16_t YUV_to_RGB565(uint8_t Y, uint8_t U, uint8_t V){
+  return GFX_RGB565(Y, U, V);
 }
 
 void draw_frame(uint8_t *buf, int width, int height) {
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
+      // runs through frame
       uint8_t Y = buf[y * width + x];
-      uint16_t color = Y_to_gray565(Y);
+
+
+      // YUV to RGB
+      //// tests
+      ////// uint16_t color = Y_to_gray565(255, 0, 0);  // all red
+      ////// uint16_t color = Y_to_gray565(0, 255,0);  // all green
+      ////// uint16_t color = Y_to_gray565(0, 0, 255);  // all blue
+      //// tests ok
+      uint16_t color = YUV_to_RGB565(Y,Y,Y);
+
+      // application
+
+
+
+      // YUV to RGB - 
+
       GFX_drawPixel(x, y, color);
     }
   }
@@ -25,7 +48,6 @@ void draw_frame(uint8_t *buf, int width, int height) {
 }
 
 int main() {
-
   stdio_init_all();
   // ov7670 shutdown, theorically not needed
   ov7670_shutdown();
