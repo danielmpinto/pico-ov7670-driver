@@ -1,4 +1,4 @@
-# Pico C SDK OV7670 Library ![RP2040](https://img.shields.io/badge/target-RP2040-red) ![RP2350](https://img.shields.io/badge/target-RP2350-lightgrey) ![OV7670](https://img.shields.io/badge/Camera-OV7670-purple)
+# Pico C SDK OV7670 Library !
 
 
 Pico C SDK Driver for 0V7670 cameras raspberry pi Pico 1 and 2.
@@ -9,7 +9,6 @@ Pico C SDK Driver for 0V7670 cameras raspberry pi Pico 1 and 2.
 - [Usage Example](#usage-example)
   - [Selfie camera example (ili9341 + OV7670)](#selfie-camera-example-using-ili9341-320x240-pixels-and-ov7670-camera)
     - [Output](#output-of-the-example)
-  - [ASCII UART example (simplestest)](#examples)
 - [Pinout](#pinout)
 - [Notes](#notes)
 - [My Setup](#my-setup-for-testing)
@@ -21,20 +20,18 @@ Pico C SDK Driver for 0V7670 cameras raspberry pi Pico 1 and 2.
 
 The driver needs:
 - Pico C SDK
-- Raspberry Pi Pico (RP2040 or 2350)
 
 
 # Usage Example
 
 
-Inside `examples/` folder we have two diffent examples, both using Y (from YUV):
-- simplestest: an example that reproduces the camera image as ASCII art over UART.
+Inside `src/` folder we have a example called `selfietest`.
 - selfietest: an example that uses an ili9341 display to reproduce the image.
-To compile a specific example, follow the instructions in [add_executable](https://github.com/danielmpinto/pico-ov7670-driver/blob/main/CMakeLists.txt)
 
 ### Selfie camera example using ili9341 320x240 pixels and OV7670 camera:
 
 ```c
+#include <stdint.h>
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "gfx.h"
@@ -42,39 +39,34 @@ To compile a specific example, follow the instructions in [add_executable](https
 #include "ov7670.h"
 #include "touch_resistive.h"
 
-// observations:
-// use 4.7Kohm pullups on SDA and SCL lines
-
-static inline uint16_t Y_to_gray565(uint8_t Y) {
-  return GFX_RGB565(Y, Y, Y);
-}
-
 void draw_frame(uint8_t *buf, int width, int height) {
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
-      uint8_t Y = buf[y * width + x];
-      uint16_t color = Y_to_gray565(Y);
+      size_t offset = (y * width + x) * 2; 
+      uint8_t high_byte = buf[offset];  
+      uint8_t low_byte = buf[offset + 1];   
+      uint16_t color = (high_byte << 8) | low_byte;
       GFX_drawPixel(x, y, color);
     }
   }
-  GFX_flush(); 
+  GFX_flush(); /// send to display
 }
 
 int main() {
-
   stdio_init_all();
   ov7670_shutdown();
   ov7670_config();
 
-  int size = OV7670_SIZE_DIV2; // 320x240
+  int size = OV7670_SIZE_DIV2; 
   WIDTH = 320;
   HEIGHT = 240;
+
+  uint8_t buf[WIDTH * HEIGHT * 2];  
+
   ov7670_frame_control(size, _window[size][0], _window[size][1],
                        _window[size][2], _window[size][3]);
 
-  uint8_t buf[WIDTH * HEIGHT];
   stdio_init_all();
-
   LCD_initDisplay();
   LCD_setRotation(1);
   GFX_createFramebuf();
@@ -86,14 +78,18 @@ int main() {
   }
 }
 
+
 ```
 
 ### Output of the example
 
-Mouser Eletronics doll:
+Pokemons:
 
 ![Output2 ](/imgs/output2.jpeg "Output 2")
 
+See the video below:
+
+[![Raspberry Pi Pico + OV7670 Camera](https://img.youtube.com/vi/tngEWj4gqWU/0.jpg)](https://www.youtube.com/shorts/tngEWj4gqWU)
 
 ## Pinout
 

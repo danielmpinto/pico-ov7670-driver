@@ -6,41 +6,24 @@
 #include "ov7670.h"
 #include "touch_resistive.h"
 
-// observations:
-// use 4.7Kohm pullups on SDA and SCL lines
-
-// static inline uint16_t Y_to_gray565(uint8_t Y, uint8_t U , uint8_t V) {    // doesnt need, not to gray anyway
-//   // turn Y (0-255) into a gray color in RGB565 format
-//   // return GFX_RGB565(Y, Y, Y);
-
-//      return GFX_RGB565(Y, U, V);
-// }
-
-uint16_t YUV_to_RGB565(uint8_t Y, uint8_t U, uint8_t V){
-  return GFX_RGB565(Y, U, V);
-}
-
 void draw_frame(uint8_t *buf, int width, int height) {
+  // for each item inside buffer
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
-      // runs through frame
-      uint8_t Y = buf[y * width + x];
+      
 
 
-      // YUV to RGB
-      //// tests
-      ////// uint16_t color = Y_to_gray565(255, 0, 0);  // all red
-      ////// uint16_t color = Y_to_gray565(0, 255,0);  // all green
-      ////// uint16_t color = Y_to_gray565(0, 0, 255);  // all blue
-      //// tests ok
-      uint16_t color = YUV_to_RGB565(Y,Y,Y);
+      // defining offset for RGB565
+      size_t offset = (y * width + x) * 2; 
+      // takes most significant byte from offset (Red and half Green)
+      uint8_t high_byte = buf[offset];  
+      // takes less significant byte from offset + 1 (half Green and Blue)
+      uint8_t low_byte = buf[offset + 1];   
 
-      // application
+      // concatenates into a 16bit variable called color
+      uint16_t color = (high_byte << 8) | low_byte;
 
-
-
-      // YUV to RGB - 
-
+      // draw in LCD
       GFX_drawPixel(x, y, color);
     }
   }
@@ -62,10 +45,15 @@ int main() {
   int size = OV7670_SIZE_DIV2; // 320x240
   WIDTH = 320;
   HEIGHT = 240;
+
+  // WIDTH * HEIGHT 'cause is RGB565 (needs to bytes per pixel)                      
+  uint8_t buf[WIDTH * HEIGHT * 2];  
+
   ov7670_frame_control(size, _window[size][0], _window[size][1],
                        _window[size][2], _window[size][3]);
 
-  uint8_t buf[WIDTH * HEIGHT];
+
+
   stdio_init_all();
 
   // inilitializations display and touch
@@ -75,10 +63,9 @@ int main() {
   configure_touch();
 
   while (true) {
-    // sends to display
-    // creating a image of 160x120 pixels
-
+    // transfers image to buffer
     ov7670_capture(buf, sizeof(buf), WIDTH, HEIGHT);
+    // reproduces image using display
     draw_frame(buf, WIDTH, HEIGHT);
   }
 }

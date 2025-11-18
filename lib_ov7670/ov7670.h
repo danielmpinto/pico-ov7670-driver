@@ -65,7 +65,7 @@
 #define _OV7670_REG_COM5 0x0E               // Common control 5
 #define _OV7670_REG_COM6 0x0F               // Common control 6
 #define _OV7670_REG_AECH 0x10               // Exposure value 9:2
-#define _OV7670_REG_CLKRC 0x11              // Internal clock
+#define _OV7670_REG_CLKRC 0x11            // Internal clock          
 #define _OV7670_CLK_EXT 0x40                // CLKRC Use ext clock directly
 #define _OV7670_CLK_SCALE 0x3F              // CLKRC Int clock prescale mask
 #define _OV7670_REG_COM7 0x12               // Common control 7

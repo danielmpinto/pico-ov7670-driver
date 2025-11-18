@@ -37,10 +37,8 @@ pico_sdk_init()
 
 add_executable(pico-ov7670-driver
 
-                # compiles simpletest 
-                # (uncoment each line to test each example)
-                # examples/simpletest.c 
-                examples/selfietest.c       
+                # compiles selfietest 
+                  src/selfietest.c       
 )
 pico_set_program_name(pico-ov7670-driver "pico-ov7670-driver")
 pico_set_program_version(pico-ov7670-driver "1.0")

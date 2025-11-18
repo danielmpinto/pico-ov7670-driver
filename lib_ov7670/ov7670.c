@@ -105,8 +105,8 @@ uint8_t _OV7670_inits[] = {
     _OV7670_REG_CONTRAS_CENTER,
     0x80, // 0x40?
     _OV7670_REG_CLKRC,
-    0x02, // limitating pclk (internal clock) for using pooling //best for high
-          // resolution, but more delay to generate img
+    0x50, // limitating pclk (internal clock) for using pooling //best for high
+          // resolution, but more delay to generate img  default( 0x02)   0x40 is a good choice
 };
 
 // defining data pins
@@ -146,29 +146,27 @@ int ov7670_capture(uint8_t *buf, size_t len, int width, int height) {
     }
 
     for (int x = 0; x < width && count < len; x++) {
-      // Byte 0: Y
-      while (!gpio_get(OV7670_PCLK_PIN))
-        ;
-      uint8_t y_byte = 0;
-      for (int i = 0; i < 8; i++) {
-        if (gpio_get(OV7670_DATA_PINS[i]))
-          y_byte |= (1 << i); // parallel pins reading
-      }
-      buf[count++] = y_byte;
-      while (gpio_get(OV7670_PCLK_PIN))
-        ;
+      
+      // first byte
+      while (!gpio_get(OV7670_PCLK_PIN));
+      
+      // reads all pins at the same time
+      uint32_t all_pins = gpio_get_all();
+      // reads values from all DATA Pins 
+      uint8_t first_byte = (uint8_t)((all_pins >> OV7670_DATA_PINS[0]) & 0xFF);
+      
+      buf[count++] = first_byte;
+      while (gpio_get(OV7670_PCLK_PIN));
 
-      // Byte 1: U/V (doesnt uses U/V)
-      while (!gpio_get(OV7670_PCLK_PIN))
-        ;
-      for (int i = 0; i < 8; i++) {
-        if (gpio_get(OV7670_DATA_PINS[i])) {
-          // not used
-          // theoraccalyl takes UV byte
-        }
-      }
-      while (gpio_get(OV7670_PCLK_PIN))
-        ;
+
+      // second byte
+      while (!gpio_get(OV7670_PCLK_PIN));
+      
+      all_pins = gpio_get_all();
+      uint8_t second_byte = (uint8_t)((all_pins >> OV7670_DATA_PINS[0]) & 0xFF);
+      
+      buf[count++] = second_byte;
+      while (gpio_get(OV7670_PCLK_PIN));
     }
 
     // wait for end of line
@@ -341,7 +339,7 @@ int ov7670_register_writelist() {
   }
 
 
-  // defines format YUV or TGB
+  // defines format YUV or RGB
   int array_rgb_size = sizeof(_OV7670_rgb) / sizeof(_OV7670_rgb[0]);
   printf("Total registers to write: %d\n", array_rgb_size);
   printf("Writing init registers...\n");
